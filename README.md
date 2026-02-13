@@ -89,42 +89,33 @@ git clone https://github.com/mhaywardhill/sql-database-elastic-query.git
 cd sql-database-elastic-query
 ```
 
-### 2. Configure parameters
+### 2. Set environment variables
 
-Edit `infra/main.parameters.json` to set your preferred region, project prefix, and SQL admin login:
-
-```json
-{
-  "parameters": {
-    "location":      { "value": "uksouth" },
-    "projectPrefix": { "value": "eqry" },
-    "sqlAdminLogin": { "value": "sqladmin" },
-    "sqlAdminPassword": { "value": "" }
-  }
-}
-```
-
-> **Note:** Leave `sqlAdminPassword` empty — the deploy script prompts for it securely at runtime.
-
-### 3. Deploy
+All deployment parameters are configured via `export`. Set the following before running the deploy script:
 
 ```bash
-export SQL_ADMIN_PASSWORD='YourStr0ngP@ssword!'
-./infra/deploy.sh
+export RESOURCE_GROUP="rg-sql-elastic-query"
+export LOCATION="uksouth"
+export PROJECT_PREFIX="eqry"
+export SQL_ADMIN_LOGIN="sqladmin"
+export SQL_ADMIN_PASSWORD="YourStr0ngP@ssword!"
 ```
 
-Override defaults with environment variables:
-
-```bash
-RESOURCE_GROUP=my-rg LOCATION=uksouth SQL_ADMIN_PASSWORD='P@ss!' ./infra/deploy.sh
-```
+> **Note:** If `SQL_ADMIN_PASSWORD` is not set, the deploy script will prompt for it securely at runtime.
 
 | Variable | Default | Description |
 |---|---|---|
 | `RESOURCE_GROUP` | `rg-sql-elastic-query` | Target resource group name |
 | `LOCATION` | `uksouth` | Azure region |
-| `SQL_ADMIN_PASSWORD` | *(prompted)* | SQL administrator password |
-| `PARAMETERS_FILE` | `infra/main.parameters.json` | Path to parameters file |
+| `PROJECT_PREFIX` | `eqry` | Prefix used for all resource names |
+| `SQL_ADMIN_LOGIN` | `sqladmin` | SQL Server administrator login |
+| `SQL_ADMIN_PASSWORD` | *(prompted)* | SQL Server administrator password |
+
+### 3. Deploy
+
+```bash
+./infra/deploy.sh
+```
 
 ---
 

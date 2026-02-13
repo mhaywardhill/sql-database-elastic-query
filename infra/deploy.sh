@@ -11,8 +11,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # ---------------------------------------------------------------------------
 RESOURCE_GROUP="${RESOURCE_GROUP:-rg-sql-elastic-query}"
 LOCATION="${LOCATION:-uksouth}"
+PROJECT_PREFIX="${PROJECT_PREFIX:-eqry}"
+SQL_ADMIN_LOGIN="${SQL_ADMIN_LOGIN:-sqladmin}"
 DEPLOYMENT_NAME="${DEPLOYMENT_NAME:-hub-spoke-sql-$(date +%Y%m%d%H%M%S)}"
-PARAMETERS_FILE="${PARAMETERS_FILE:-${SCRIPT_DIR}/main.parameters.json}"
 
 # ---------------------------------------------------------------------------
 # Prompt for SQL admin password if not set
@@ -58,8 +59,11 @@ az deployment group create \
   --resource-group "$RESOURCE_GROUP" \
   --name "$DEPLOYMENT_NAME" \
   --template-file "${SCRIPT_DIR}/main.bicep" \
-  --parameters @"$PARAMETERS_FILE" \
-  --parameters sqlAdminPassword="$SQL_ADMIN_PASSWORD" \
+  --parameters \
+    location="$LOCATION" \
+    projectPrefix="$PROJECT_PREFIX" \
+    sqlAdminLogin="$SQL_ADMIN_LOGIN" \
+    sqlAdminPassword="$SQL_ADMIN_PASSWORD" \
   --output table
 
 echo ""
