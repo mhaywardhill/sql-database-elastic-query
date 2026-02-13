@@ -168,6 +168,7 @@ module sqlServer1 'modules/sqlServer.bicep' = {
     skuName: 'Standard'
     skuTier: 'Standard'
     skuCapacity: 10
+    allowAzureServices: true
     tags: tags
   }
 }
@@ -187,6 +188,7 @@ module sqlServer2 'modules/sqlServer.bicep' = {
     skuName: 'Standard'
     skuTier: 'Standard'
     skuCapacity: 10
+    allowAzureServices: true
     tags: tags
   }
 }

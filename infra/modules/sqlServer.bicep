@@ -26,6 +26,9 @@ param skuCapacity int = 10
 @description('Tags to apply')
 param tags object = {}
 
+@description('Allow Azure services to access this server (required for elastic query)')
+param allowAzureServices bool = false
+
 resource sqlServer 'Microsoft.Sql/servers@2023-08-01-preview' = {
   name: sqlServerName
   location: location
@@ -33,8 +36,19 @@ resource sqlServer 'Microsoft.Sql/servers@2023-08-01-preview' = {
   properties: {
     administratorLogin: adminLogin
     administratorLoginPassword: adminPassword
-    publicNetworkAccess: 'Disabled'
+    publicNetworkAccess: allowAzureServices ? 'Enabled' : 'Disabled'
     minimalTlsVersion: '1.2'
+  }
+}
+
+// Required for elastic query: SQL-to-SQL connections use the Azure backbone,
+// not private endpoints. This rule only allows Azure-internal traffic.
+resource allowAzureServicesRule 'Microsoft.Sql/servers/firewallRules@2023-08-01-preview' = if (allowAzureServices) {
+  parent: sqlServer
+  name: 'AllowAllWindowsAzureIps'
+  properties: {
+    startIpAddress: '0.0.0.0'
+    endIpAddress: '0.0.0.0'
   }
 }
 

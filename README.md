@@ -65,9 +65,14 @@ infra/
 └── modules/
     ├── vnet.bicep              # Virtual network (hub & spokes)
     ├── vnetPeering.bicep       # VNET peering
-    ├── sqlServer.bicep          # SQL Server + database
-    ├── privateEndpoint.bicep    # Private endpoint + DNS zone group
-    └── privateDnsZone.bicep     # Private DNS zone + VNET links
+    ├── sqlServer.bicep         # SQL Server + database
+    ├── privateEndpoint.bicep   # Private endpoint + DNS zone group
+    └── privateDnsZone.bicep    # Private DNS zone + VNET links
+sql/
+├── 01-setup-remote-db2.sql     # Create sample table + login on DB2
+├── 02-setup-elastic-query-db1.sql  # External data source + table on DB1
+├── 03-verify-elastic-query.sql # Test queries across databases
+└── 04-cleanup.sql              # Tear down elastic query objects
 ```
 
 ---
@@ -115,6 +120,75 @@ export SQL_ADMIN_PASSWORD="YourStr0ngP@ssword!"
 
 ```bash
 ./infra/deploy.sh
+```
+
+---
+
+## Elastic Query Setup
+
+After deploying the infrastructure, configure [elastic query](https://learn.microsoft.com/azure/azure-sql/database/elastic-query-overview) to query data on **DB2** from **DB1** using an external table.
+
+### How it works
+
+```
+┌──────────────┐   external table   ┌──────────────┐
+│    DB1       │ ──────────────────► │    DB2       │
+│  (Spoke 1)   │   via Private Link │  (Spoke 2)   │
+│              │                    │              │
+│ RemoteCustomers ─── maps to ───── │ Customers    │
+└──────────────┘                    └──────────────┘
+```
+
+### Step 1 — Set up the remote database (DB2)
+
+Connect to the **master** database on SQL Server 2 and then to **eqry-db2**. Run:
+
+```bash
+sqlcmd -S <sql-server-2-fqdn>.database.windows.net -U sqladmin -P '<password>' -d eqry-db2 -i sql/01-setup-remote-db2.sql
+```
+
+This script:
+- Creates a login and user for elastic query authentication
+- Creates a sample `Customers` table with 5 rows
+- Grants `SELECT` permission to the elastic query user
+
+> **Note:** The `CREATE LOGIN` statement must be run against the **master** database. Run it separately if using `sqlcmd`.
+
+### Step 2 — Set up the elastic query (DB1)
+
+Before running, edit `sql/02-setup-elastic-query-db1.sql` and replace:
+- `<MasterKeyP@ssword2>` — a master key password for DB1
+- `<ElasticQueryP@ssword1>` — the password used in step 1 for the elastic query login
+- `<sql-server-2-fqdn>` — the FQDN of SQL Server 2 (from deployment outputs)
+
+Then run:
+
+```bash
+sqlcmd -S <sql-server-1-fqdn>.database.windows.net -U sqladmin -P '<password>' -d eqry-db1 -i sql/02-setup-elastic-query-db1.sql
+```
+
+This script:
+- Creates a database master key
+- Creates a database-scoped credential
+- Creates an external data source pointing to DB2
+- Creates an external table `dbo.RemoteCustomers` mapped to `dbo.Customers` on DB2
+
+### Step 3 — Verify
+
+Run the verification queries on DB1:
+
+```bash
+sqlcmd -S <sql-server-1-fqdn>.database.windows.net -U sqladmin -P '<password>' -d eqry-db1 -i sql/03-verify-elastic-query.sql
+```
+
+You should see the Customers data from DB2 returned as if it were a local table.
+
+### Cleanup
+
+To remove elastic query objects without deleting the infrastructure:
+
+```bash
+sqlcmd -S <sql-server-1-fqdn>.database.windows.net -U sqladmin -P '<password>' -d eqry-db1 -i sql/04-cleanup.sql
 ```
 
 ---
