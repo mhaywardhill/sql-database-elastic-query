@@ -47,7 +47,8 @@ graph TB
 
 | Decision | Detail |
 |---|---|
-| **Public access disabled** | Both SQL Servers reject public connections; access is exclusively via private endpoints. |
+| **Public access disabled** | SQL Server 1 (querying side) rejects public connections; access is exclusively via private endpoints. |
+| **Allow Azure Services on SQL Server 2** | SQL Server 2 (remote/target) must have **Allow Azure services and resources to access this server** enabled. Elastic query connections originate from the Azure SQL service infrastructure, not from your VNET, so private endpoints alone are insufficient. Service tags and VNET rules are also not supported for this traffic. See [Microsoft documentation](https://learn.microsoft.com/azure/azure-sql/database/elastic-query-overview?view=azuresql#connectivity-requirements). |
 | **Private DNS zone** | A single `privatelink.database.windows.net` zone is linked to all three VNETs, ensuring consistent name resolution across the topology. |
 | **Hub-ready subnets** | The hub VNET includes `AzureFirewallSubnet` and `GatewaySubnet` placeholders for future NVA or VPN/ExpressRoute gateway deployment. |
 | **Private endpoint policies** | `privateEndpointNetworkPolicies` is set to `Disabled` on PE subnets to permit private endpoint creation. |

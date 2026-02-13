@@ -168,7 +168,7 @@ module sqlServer1 'modules/sqlServer.bicep' = {
     skuName: 'Standard'
     skuTier: 'Standard'
     skuCapacity: 10
-    allowAzureServices: true
+    allowAzureServices: false  // SQL Server 1 is the querying side, no inbound needed
     tags: tags
   }
 }
